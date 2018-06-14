@@ -4,11 +4,20 @@ import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Utility class to encode en decode BCD numbers
+ */
 public class BCD {
     private BCD () {}
 
     private static Pattern BCD_PATTERN = Pattern.compile("0*([1-9][0-9]*|0)");
 
+    /**
+     * Encode string with numbers to BCD encoded bytes (big endian)
+     * @param numbers Number that needs to be converted
+     * @return BCD encoded number
+     * @throws IllegalArgumentException if input is not a number
+     */
     public static byte[] encode(String numbers) {
         final Matcher matcher = BCD_PATTERN.matcher(numbers);
         if (!matcher.matches()) {
@@ -32,6 +41,12 @@ public class BCD {
         return bcd;
     }
 
+    /**
+     * Encode value to BCD encoded bytes (big endian)
+     * @param value number
+     * @return BCD encoded number
+     * @throws IllegalArgumentException if input is negative
+     */
     public static byte[] encode(BigInteger value) {
         if (value.signum() == -1) {
             throw new IllegalArgumentException("Only non-negative values are supported");
@@ -42,6 +57,12 @@ public class BCD {
             return encode(value.longValue());
     }
 
+    /**
+     * Encode value to BCD encoded bytes (big endian)
+     * @param value number
+     * @return BCD encoded number
+     * @throws IllegalArgumentException if input is negative
+     */
     public static byte[] encode(long value) {
         if (value < 0) {
             throw new IllegalArgumentException("Only non-negative values are supported");
@@ -64,6 +85,12 @@ public class BCD {
         return bcd;
     }
 
+    /**
+     * Decodes BCD encoded bytes to BigInteger
+     * @param bcd BCD encoded bytes
+     * @return encoded number
+     * @throws IllegalArgumentException if an illegal byte is detected
+     */
     public static BigInteger decode(byte[] bcd) {
         BigInteger value = BigInteger.ZERO;
         for (int i =  0; i < bcd.length; i++) {
@@ -80,6 +107,12 @@ public class BCD {
         return value;
     }
 
+    /**
+     * Decodes BCD encoded bytes directly to a String
+     * @param bcd BCD encoded bytes
+     * @return encoded number as String
+     * @throws IllegalArgumentException if an illegal byte is detected
+     */
     public static String decodeAsString(byte[] bcd) {
         final StringBuilder buf = new StringBuilder(bcd.length * 2);
         for (int i = 0; i < bcd.length; i++) {
