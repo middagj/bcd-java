@@ -29,8 +29,22 @@ public class BCDTest {
     }
 
     @Test
-    public void shouldEncodeStringAndStripLeadingZero() {
-        assertArrayEquals(new byte[] { 0x31 }, BCD.encode("031"));
+    public void shouldEncodeStringAndKeepExplicitZero() {
+        assertArrayEquals(new byte[] { 0x00, 0x31 }, BCD.encode("031"));
+    }
+
+    @Test
+    public void encodeStringShouldThrowExceptionForEmptyString() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Can only encode numerical strings");
+        BCD.encode("");
+    }
+
+    @Test
+    public void encodeStringShouldThrowExceptionForNonDecimalString() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Can only encode numerical strings");
+        BCD.encode("A");
     }
 
     @Test
@@ -56,6 +70,35 @@ public class BCDTest {
     }
 
     @Test
+    public void shouldEncodeLongWithLengthEven() {
+        assertArrayEquals(new byte[] { 0x00, 0x31 }, BCD.encode(31, 2));
+    }
+
+    @Test
+    public void shouldEncodeLongWithLengthOdd() {
+        assertArrayEquals(new byte[] { 0x00, 0x00, 0x02, 0x31 }, BCD.encode(231, 4));
+    }
+
+    @Test
+    public void shouldEncodeLongWithLengthZero() {
+        assertArrayEquals(new byte[] { 0x00, 0x00 }, BCD.encode(0, 2));
+    }
+
+    @Test
+    public void encodeLongWithLengthShouldThrowExceptionForNegative() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Only non-negative values are supported");
+        BCD.encode(-1, 2);
+    }
+
+    @Test
+    public void encodeLongWithLengthShouldThrowExceptionIfLengthIsTooSmall() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Value does not fit in byte array of length 1");
+        BCD.encode(100, 1);
+    }
+
+    @Test
     public void shouldEncodeBigIntegerSmall() {
         assertArrayEquals(new byte[] { 0x09, 0x22, 0x33, 0x72, 0x03, 0x68, 0x54, 0x77, 0x58, 0x07 },
             BCD.encode(BigInteger.valueOf(Long.MAX_VALUE)));
@@ -77,6 +120,37 @@ public class BCDTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Only non-negative values are supported");
         BCD.encode(BigInteger.ONE.negate());
+    }
+
+    @Test
+    public void shouldEncodeBigIntegerWithLengthSmall() {
+        assertArrayEquals(new byte[] { 0x00, 0x09, 0x22, 0x33, 0x72, 0x03, 0x68, 0x54, 0x77, 0x58, 0x07 },
+                BCD.encode(BigInteger.valueOf(Long.MAX_VALUE), 11));
+    }
+
+    @Test
+    public void shouldEncodeBigIntegerWithLengthBig() {
+        assertArrayEquals(new byte[] { 0x00, 0x09, 0x22, 0x33, 0x72, 0x03, 0x68, 0x54, 0x77, 0x58, 0x08 },
+                BCD.encode(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 11));
+    }
+
+    @Test
+    public void shouldEncodeBigIntegerWithLengthZero() {
+        assertArrayEquals(new byte[] { 0x00, 0x00 }, BCD.encode(BigInteger.ZERO, 2));
+    }
+
+    @Test
+    public void encodeBigIntegerWithLengthShouldThrowExceptionForNegative() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Only non-negative values are supported");
+        BCD.encode(BigInteger.ONE.negate());
+    }
+
+    @Test
+    public void encodeBigIntegerWithLengthShouldThrowExceptionIfLengthIsTooSmall() {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Value does not fit in byte array of length 1");
+        BCD.encode(BigInteger.valueOf(100), 1);
     }
 
     @Test
@@ -110,30 +184,40 @@ public class BCDTest {
 
     @Test
     public void shouldDecodeAsStringEven() {
-        assertEquals("31", BCD.decodeAsString(new byte[] { 0x31}));
+        assertEquals("31", BCD.decodeAsString(new byte[] { 0x31 }, true));
     }
 
     @Test
-    public void shouldDecodeAsStringOdd() {
-        assertEquals("231", BCD.decodeAsString(new byte[] { 0x02, 0x31}));
+    public void shouldDecodeAsStringOddStripLeadingZero() {
+        assertEquals("231", BCD.decodeAsString(new byte[] { 0x02, 0x31 }, true));
     }
 
     @Test
-    public void shouldDecodeAsStringZero() {
-        assertEquals("0", BCD.decodeAsString(new byte[] { 0x00 }));
+    public void shouldDecodeAsStringOddKeepLeadingZero() {
+        assertEquals("0231", BCD.decodeAsString(new byte[] { 0x02, 0x31 }, false));
+    }
+
+    @Test
+    public void shouldDecodeAsStringZeroStripLeadingZero() {
+        assertEquals("0", BCD.decodeAsString(new byte[] { 0x00 }, true));
+    }
+
+    @Test
+    public void shouldDecodeAsStringZeroKeepLeadingZero() {
+        assertEquals("00", BCD.decodeAsString(new byte[] { 0x00 }, false));
     }
 
     @Test
     public void decodeAsStringShouldThrowExceptionOnHighNibble() {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Illegal byte d0 at 0");
-        BCD.decodeAsString(new byte[] { -48 });
+        BCD.decodeAsString(new byte[] { -48 }, true);
     }
 
     @Test
     public void decodeAsStringShouldThrowExceptionOnLowNibble() {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Illegal byte 0d at 0");
-        BCD.decodeAsString(new byte[] { 0x0d });
+        BCD.decodeAsString(new byte[] { 0x0d }, true);
     }
 }
