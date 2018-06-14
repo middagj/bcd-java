@@ -146,6 +146,7 @@ public class BCD {
     /**
      * Decodes BCD encoded bytes directly to a decimal string
      * @param bcd BCD encoded bytes
+     * @param stripLeadingZero strip leading zero if value is of odd length
      * @return encoded number as String
      * @throws IllegalArgumentException if an illegal byte is detected
      */
